@@ -1,4 +1,4 @@
-// 3xYouTube content script.
+// YT Playback Speed content script.
 //
 // Applies a playback rate between 0.25x and 3x to YouTube's video element,
 // remembers it, re-applies it to every new video, and replaces the player's own
@@ -132,10 +132,10 @@ let syncQueued = false;
 let panelTitle = "Playback speed";   // taken from YouTube's own row, so it is localised
 
 function buildPanel() {
-    const value = createElement("div", { class: "yt3x-value", text: formatSpeedFixed(DEFAULT_SPEED) });
+    const value = createElement("div", { class: "ytps-value", text: formatSpeedFixed(DEFAULT_SPEED) });
 
     const slider = createElement("input", {
-        class: "yt3x-slider",
+        class: "ytps-slider",
         type: "range",
         min: String(MIN_SPEED),
         max: String(MAX_SPEED),
@@ -148,10 +148,10 @@ function buildPanel() {
     slider.addEventListener("change", () => applySpeed(Number(slider.value)));
 
     const minus = createElement("button", {
-        class: "yt3x-round", type: "button", attrs: { "aria-label": "Slower" },
+        class: "ytps-round", type: "button", attrs: { "aria-label": "Slower" },
     }, [createIcon(ICON_MINUS)]);
     const plus = createElement("button", {
-        class: "yt3x-round", type: "button", attrs: { "aria-label": "Faster" },
+        class: "ytps-round", type: "button", attrs: { "aria-label": "Faster" },
     }, [createIcon(ICON_PLUS)]);
 
     const stepBy = (direction) => {
@@ -162,10 +162,10 @@ function buildPanel() {
     minus.addEventListener("click", () => stepBy(-1));
     plus.addEventListener("click", () => stepBy(1));
 
-    const chips = createElement("div", { class: "yt3x-chips" });
+    const chips = createElement("div", { class: "ytps-chips" });
     for (const speed of PRESETS) {
         const chip = createElement("button", {
-            class: "yt3x-chip",
+            class: "ytps-chip",
             type: "button",
             text: Number.isInteger(speed) ? speed.toFixed(1) : String(speed),
             dataset: { speed: String(speed) },
@@ -176,22 +176,22 @@ function buildPanel() {
     }
 
     const back = createElement("button", {
-        class: "yt3x-back", type: "button", attrs: { "aria-label": "Back" },
+        class: "ytps-back", type: "button", attrs: { "aria-label": "Back" },
     });
     back.style.backgroundImage = `url("${BACK_ARROW_SVG}")`;
     back.addEventListener("click", () => closePanel());
 
-    const title = createElement("span", { class: "yt3x-title", text: panelTitle });
+    const title = createElement("span", { class: "ytps-title", text: panelTitle });
 
     const el = createElement("div", {
-        id: "yt3x-panel",
+        id: "ytps-panel",
         // focus lands here on open so the slider does not flash its focus ring;
         // Tab still reaches the controls in order
         attrs: { role: "dialog", "aria-label": "Playback speed", tabindex: "-1" },
     }, [
-        createElement("div", { class: "yt3x-header" }, [back, title]),
+        createElement("div", { class: "ytps-header" }, [back, title]),
         value,
-        createElement("div", { class: "yt3x-row" }, [minus, slider, plus]),
+        createElement("div", { class: "ytps-row" }, [minus, slider, plus]),
         chips,
     ]);
     el.hidden = true;
@@ -215,7 +215,7 @@ function ensurePanel() {
 
 function openPanel() {
     ensurePanel();
-    nativeSettingsMenu()?.classList.add("yt3x-hidden");
+    nativeSettingsMenu()?.classList.add("ytps-hidden");
     updatePlayerUi(findVideoElement()?.playbackRate ?? DEFAULT_SPEED);
     panel.hidden = false;
     panel.focus({ preventScroll: true });
@@ -223,15 +223,15 @@ function openPanel() {
 
 function closePanel() {
     if (panel) panel.hidden = true;
-    nativeSettingsMenu()?.classList.remove("yt3x-hidden");
+    nativeSettingsMenu()?.classList.remove("ytps-hidden");
     if (settingsItem) settingsItem.focus({ preventScroll: true });
 }
 
 function buildOsd() {
-    const label = createElement("div", { class: "yt3x-osd-label", text: panelTitle });
-    const value = createElement("div", { class: "yt3x-osd-value", text: formatSpeedFixed(DEFAULT_SPEED) });
+    const label = createElement("div", { class: "ytps-osd-label", text: panelTitle });
+    const value = createElement("div", { class: "ytps-osd-value", text: formatSpeedFixed(DEFAULT_SPEED) });
     const el = createElement("div", {
-        id: "yt3x-osd",
+        id: "ytps-osd",
         attrs: { role: "status", "aria-live": "polite" },
         dataset: { visible: "false" },
     }, [label, value]);
@@ -274,7 +274,7 @@ function updatePlayerUi(speed) {
     const sliderValue = Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
     slider.value = String(sliderValue);
     const fillPercent = ((sliderValue - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)) * 100;
-    slider.style.setProperty("--yt3x-fill", `${fillPercent}%`);
+    slider.style.setProperty("--ytps-fill", `${fillPercent}%`);
 
     minus.disabled = speed <= MIN_SPEED;
     plus.disabled = speed >= MAX_SPEED;
@@ -322,9 +322,9 @@ function buildSettingsItem(nativeRow) {
             createElement("div", { class: "ytp-menuitem-content" }),
         ]);
 
-    row.id = "yt3x-menuitem";
+    row.id = "ytps-menuitem";
     // the source row is hidden before it is cloned, so undo that on the copy
-    row.classList.remove("yt3x-hidden");
+    row.classList.remove("ytps-hidden");
     row.removeAttribute("aria-hidden");
     row.setAttribute("role", "menuitem");
     row.setAttribute("aria-haspopup", "true");
@@ -366,7 +366,7 @@ function syncSettingsItem() {
     const submenuOpen = [...menu.querySelectorAll(".ytp-panel-header")]
         .some((header) => header.offsetHeight > 0);
     if (submenuOpen) {
-        for (const stale of menu.querySelectorAll("#yt3x-menuitem")) stale.remove();
+        for (const stale of menu.querySelectorAll("#ytps-menuitem")) stale.remove();
         settingsItem = null;
         return;
     }
@@ -374,16 +374,16 @@ function syncSettingsItem() {
     const root = menu.querySelector(".ytp-panel-menu");
     if (!root) return;
 
-    const rows = [...root.querySelectorAll(".ytp-menuitem")].filter((row) => row.id !== "yt3x-menuitem");
+    const rows = [...root.querySelectorAll(".ytp-menuitem")].filter((row) => row.id !== "ytps-menuitem");
     const nativeRow = rows.find(isSpeedRow) ?? null;
 
     if (nativeRow) {
         panelTitle = nativeRow.querySelector(".ytp-menuitem-label")?.textContent?.trim() || panelTitle;
-        nativeRow.classList.add("yt3x-hidden");
+        nativeRow.classList.add("ytps-hidden");
         nativeRow.setAttribute("aria-hidden", "true");
     }
 
-    const existing = root.querySelector("#yt3x-menuitem");
+    const existing = root.querySelector("#ytps-menuitem");
     if (existing) {
         settingsItem = existing;
         ensureRowIcon(settingsItem, nativeRow);

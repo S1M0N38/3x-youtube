@@ -1,12 +1,12 @@
 /* In-player playback speed control. Uses YouTube's own class names for the
    menu row, and a standalone panel styled like the player's speed panel. */
 
-.yt3x-hidden {
+.ytps-hidden {
     display: none !important;
 }
 
-#yt3x-panel,
-#yt3x-osd {
+#ytps-panel,
+#ytps-osd {
     color: #fff;
     font-family: Roboto, Arial, sans-serif;
     line-height: 1.2;
@@ -14,7 +14,7 @@
 
 /* YouTube's settings menu is rgba(0,0,0,0.6) with no blur or shadow; the panel
    matches it so it reads as part of the same menu. */
-#yt3x-panel {
+#ytps-panel {
     position: absolute;
     right: 12px;
     bottom: 56px;
@@ -30,15 +30,15 @@
     -webkit-user-select: none;
 }
 
-#yt3x-panel[hidden] {
+#ytps-panel[hidden] {
     display: none;
 }
 
-#yt3x-panel:focus {
+#ytps-panel:focus {
     outline: none;
 }
 
-.yt3x-header {
+.ytps-header {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -48,7 +48,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.yt3x-back {
+.ytps-back {
     flex: 0 0 auto;
     width: 48px;
     height: 48px;
@@ -60,22 +60,22 @@
     cursor: pointer;
 }
 
-.yt3x-back:hover {
+.ytps-back:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.yt3x-back:focus-visible {
+.ytps-back:focus-visible {
     outline: 2px solid #fff;
     outline-offset: -2px;
 }
 
-.yt3x-title {
+.ytps-title {
     font-size: 12px;
     font-weight: 500;
     line-height: 1.2;
 }
 
-.yt3x-value {
+.ytps-value {
     margin: 10px 0 20px;
     font-size: 29px;
     font-weight: 500;
@@ -83,14 +83,14 @@
     font-variant-numeric: tabular-nums;
 }
 
-.yt3x-row {
+.ytps-row {
     display: flex;
     align-items: center;
     gap: 14px;
     padding: 0 18px;
 }
 
-.yt3x-round {
+.ytps-round {
     flex: 0 0 auto;
     display: grid;
     place-items: center;
@@ -104,17 +104,17 @@
     cursor: pointer;
 }
 
-.yt3x-round:hover {
+.ytps-round:hover {
     background: rgba(255, 255, 255, 0.28);
 }
 
-.yt3x-round:disabled {
+.ytps-round:disabled {
     opacity: 0.4;
     cursor: default;
 }
 
 /* range input: white fill up to the thumb, like YouTube's own slider */
-.yt3x-slider {
+.ytps-slider {
     flex: 1 1 auto;
     height: 18px;
     margin: 0;
@@ -124,27 +124,27 @@
     cursor: pointer;
 }
 
-.yt3x-slider::-webkit-slider-runnable-track {
+.ytps-slider::-webkit-slider-runnable-track {
     height: 4px;
     border-radius: 2px;
     background: linear-gradient(to right,
-        #fff var(--yt3x-fill, 0%),
-        rgba(255, 255, 255, 0.34) var(--yt3x-fill, 0%));
+        #fff var(--ytps-fill, 0%),
+        rgba(255, 255, 255, 0.34) var(--ytps-fill, 0%));
 }
 
-.yt3x-slider::-moz-range-track {
+.ytps-slider::-moz-range-track {
     height: 4px;
     border-radius: 2px;
     background: rgba(255, 255, 255, 0.34);
 }
 
-.yt3x-slider::-moz-range-progress {
+.ytps-slider::-moz-range-progress {
     height: 4px;
     border-radius: 2px;
     background: #fff;
 }
 
-.yt3x-slider::-webkit-slider-thumb {
+.ytps-slider::-webkit-slider-thumb {
     width: 16px;
     height: 16px;
     margin-top: -6px;
@@ -155,7 +155,7 @@
     -webkit-appearance: none;
 }
 
-.yt3x-slider::-moz-range-thumb {
+.ytps-slider::-moz-range-thumb {
     width: 16px;
     height: 16px;
     border: 0;
@@ -163,20 +163,20 @@
     background: #fff;
 }
 
-.yt3x-slider:focus-visible {
+.ytps-slider:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 4px;
     border-radius: 4px;
 }
 
-.yt3x-chips {
+.ytps-chips {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 6px;
     padding: 18px 18px 0;
 }
 
-.yt3x-chip {
+.ytps-chip {
     padding: 8px 0;
     border: 0;
     border-radius: 18px;
@@ -189,18 +189,18 @@
     cursor: pointer;
 }
 
-.yt3x-chip:hover {
+.ytps-chip:hover {
     background: rgba(255, 255, 255, 0.26);
 }
 
-.yt3x-chip[aria-pressed="true"] {
+.ytps-chip[aria-pressed="true"] {
     background: #fff;
     color: #0f0f0f;
     font-weight: 500;
 }
 
 /* Transient speed readout shown when the keyboard shortcuts change the speed. */
-#yt3x-osd {
+#ytps-osd {
     position: absolute;
     top: 12%;
     left: 50%;
@@ -219,17 +219,17 @@
     transition: opacity 0.18s ease-out;
 }
 
-#yt3x-osd[data-visible="true"] {
+#ytps-osd[data-visible="true"] {
     opacity: 1;
 }
 
-.yt3x-osd-label {
+.ytps-osd-label {
     font-size: 13px;
     line-height: 1.3;
     color: rgba(255, 255, 255, 0.72);
 }
 
-.yt3x-osd-value {
+.ytps-osd-value {
     font-size: 40px;
     font-weight: 500;
     line-height: 1.15;

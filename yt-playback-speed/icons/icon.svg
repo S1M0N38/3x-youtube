@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
-  <!-- 3xYouTube: YouTube's logo rectangle (28.57 x 20 box, 3.578 corner radius)
+  <!-- YT Playback Speed: YouTube's logo rectangle (28.57 x 20 box, 3.578 corner radius)
        in YouTube red, with the player's own "playback speed" gauge in place of
        the play triangle. The gauge path is verbatim from the SVG YouTube ships
        in the player's settings menu (24 x 24 viewBox); everything above sits in

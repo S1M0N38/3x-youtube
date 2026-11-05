@@ -1,4 +1,4 @@
-## 3xYouTube
+## YT Playback Speed
 
 > This extension started as a fork of [nathvnt/3x-youtube](https://github.com/nathvnt/3x-youtube) and evolve a lot since then. Big thanks to the original author :)
 
@@ -23,5 +23,5 @@ one that goes up to 3x, and it remembers the speed you pick.
 ## Install
 
 1. Open `about:debugging#/runtime/this-firefox`.
-2. Click *Load Temporary Add-on…* and select `3xYouTube/firefox/manifest.json`.
+2. Click *Load Temporary Add-on…* and select `yt-playback-speed/manifest.json`.
 3. Reload the YouTube tab.
