@@ -10,7 +10,7 @@ browser extensions user interface. <br/>
 By default YouTube has a limit of 2x default speed
 when setting custom a playback rate for a video.
 This browser extension allows users to easily set custom
-playback speeds of anywhere between 0.1x and 3x. <br/>
+playback speeds of anywhere between 0.25x and 3x. <br/>
 
 ## In-player control
 
@@ -26,9 +26,12 @@ be changed from the keyboard:
 
 | Shortcut | Action |
 | --- | --- |
-| <kbd>Alt</kbd>+<kbd>↑</kbd> | faster by 0.25x |
-| <kbd>Alt</kbd>+<kbd>↓</kbd> | slower by 0.25x |
-| <kbd>Alt</kbd>+<kbd>0</kbd> | back to 1x |
+| <kbd>Alt</kbd>+<kbd>↑</kbd> | +0.25x |
+| <kbd>Alt</kbd>+<kbd>↓</kbd> | −0.25x |
+
+Each keypress shows the new speed in a large overlay over the video (styled
+like YouTube's own shortcut overlays) and keeps the gear-menu panel in sync,
+so opening it always shows the speed that is actually playing.
 
 ## Browser Compatibility
 

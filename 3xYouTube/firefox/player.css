@@ -184,3 +184,44 @@
     font-weight: 500;
 }
 
+
+/* Transient speed readout shown when the keyboard shortcuts change the speed.
+   Modelled on YouTube's own bezel overlays: dark rounded card, big number. */
+#yt3x-osd {
+    position: absolute;
+    top: 12%;
+    left: 50%;
+    z-index: 71;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 12px 26px 14px;
+    border-radius: 12px;
+    background: rgba(28, 28, 28, 0.9);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(12px);
+    color: #fff;
+    font-family: Roboto, Arial, sans-serif;
+    transform: translateX(-50%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease-out;
+}
+
+#yt3x-osd[data-visible="true"] {
+    opacity: 1;
+}
+
+.yt3x-osd-label {
+    font-size: 13px;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.yt3x-osd-value {
+    font-size: 40px;
+    font-weight: 500;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+}

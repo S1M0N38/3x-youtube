@@ -3,7 +3,7 @@
 // native looking speed control inside the player's settings menu.
 
 const DEFAULT_SPEED = 1;
-const MIN_SPEED = 0.1;
+const MIN_SPEED = 0.25;
 const MAX_SPEED = 3;
 
 // The in-player slider runs 0.25x-3x, which is what YouTube gates behind
@@ -74,19 +74,15 @@ async function restoreSpeed() {
     updatePlayerUi(speed);
 }
 
-// The keyboard shortcuts are the only other caller.
+// The keyboard shortcuts are the only caller: step by a fixed amount and show
+// the new speed over the video, the way YouTube's own overlays do.
 browser.runtime.onMessage.addListener(async (request) => {
+    if (request.action !== "stepSpeed") return undefined;
     const video = findVideoElement();
-    switch (request.action) {
-        case "stepSpeed": {
-            const current = video ? video.playbackRate : await readStoredSpeed();
-            return { status: "success", speed: await applySpeed(current + Number(request.delta || 0)) };
-        }
-        case "resetSpeed":
-            return { status: "reset to default", speed: await applySpeed(DEFAULT_SPEED) };
-        default:
-            return undefined;
-    }
+    const current = video ? video.playbackRate : await readStoredSpeed();
+    const speed = await applySpeed(current + Number(request.delta || 0));
+    showSpeedOsd(speed);
+    return { status: "success", speed };
 });
 
 // ---------------------------------------------------------------------------
@@ -127,6 +123,8 @@ const ICON_MINUS = "M19 13H5v-2h14v2z";
 const ICON_PLUS = "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z";
 
 let panel = null;
+let osd = null;
+let osdTimer = null;
 let panelTitle = "Playback speed";
 let settingsItem = null;
 let syncQueued = false;
@@ -214,13 +212,44 @@ function ensurePanel() {
     if (!panel || !panel.isConnected) {
         panel = buildPanel();
         playerRoot().append(panel);
-        updatePlayerUi(findVideoElement()?.playbackRate ?? DEFAULT_SPEED);
     }
     return panel;
 }
 
 function nativeMenu() {
     return document.querySelector(".ytp-settings-menu");
+}
+
+function buildOsd() {
+    const el = createElement("div", {
+        id: "yt3x-osd",
+        attrs: { role: "status", "aria-live": "polite" },
+        dataset: { visible: "false" },
+    }, [
+        createElement("div", { class: "yt3x-osd-label", text: panelTitle }),
+        createElement("div", { class: "yt3x-osd-value", text: formatSpeed(DEFAULT_SPEED) }),
+    ]);
+    el._yt3x = { label: el.firstChild, value: el.lastChild };
+    return el;
+}
+
+function ensureOsd() {
+    if (!osd || !osd.isConnected) {
+        osd = buildOsd();
+        playerRoot().append(osd);
+    }
+    return osd;
+}
+
+// Big transient readout over the video, like YouTube's own shortcut overlays.
+function showSpeedOsd(speed) {
+    if (speed === null || speed === undefined) return;
+    const el = ensureOsd();
+    el._yt3x.label.textContent = panelTitle;
+    el._yt3x.value.textContent = `${Number(speed).toFixed(2)}x`;
+    el.dataset.visible = "true";
+    clearTimeout(osdTimer);
+    osdTimer = setTimeout(() => { el.dataset.visible = "false"; }, 1200);
 }
 
 function closePanel() {
@@ -254,7 +283,8 @@ function updatePlayerUi(speed) {
     const itemContent = settingsItem?.querySelector(".ytp-menuitem-content");
     if (itemContent) itemContent.textContent = speed === 1 ? "Normal" : formatSpeed(speed);
 
-    if (!panel || !panel.isConnected) return;
+    // Kept up to date even while hidden, so opening it never shows a stale value.
+    ensurePanel();
     const { value, slider, minus, plus, chips, title } = panel._yt3x;
 
     title.textContent = panelTitle;

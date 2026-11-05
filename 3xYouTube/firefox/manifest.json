@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "3xYouTube",
-  "version": "1.3",
+  "version": "1.4",
   "description": "Increase YouTube playback speed up to 3x straight from the player settings menu.",
   "permissions": [
     "storage",
@@ -45,12 +45,6 @@
         "default": "Alt+Down"
       },
       "description": "Decrease playback speed"
-    },
-    "speed-reset": {
-      "suggested_key": {
-        "default": "Alt+0"
-      },
-      "description": "Reset playback speed to 1x"
     }
   },
   "browser_specific_settings": {

@@ -5,8 +5,7 @@ const STEP = 0.25;
 
 const MESSAGES = {
     "speed-up": { action: "stepSpeed", delta: STEP },
-    "speed-down": { action: "stepSpeed", delta: -STEP },
-    "speed-reset": { action: "resetSpeed" }
+    "speed-down": { action: "stepSpeed", delta: -STEP }
 };
 
 async function forwardToActiveTab(message) {
