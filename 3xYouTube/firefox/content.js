@@ -1,38 +1,41 @@
-// 3xYouTube content script: applies the chosen playback rate to YouTube's
-// video element, remembers it, re-applies it on every new video, and puts a
-// native looking speed control inside the player's settings menu.
+// 3xYouTube content script.
+//
+// Applies a playback rate between 0.25x and 3x to YouTube's video element,
+// remembers it, re-applies it to every new video, and replaces the player's own
+// "Playback speed" row with one that is not capped at 2x.
 
 const DEFAULT_SPEED = 1;
 const MIN_SPEED = 0.25;
 const MAX_SPEED = 3;
-
-// The in-player slider runs 0.25x-3x, which is what YouTube gates behind
-// Premium. The toolbar popup uses the same range.
-const PANEL_MIN = 0.25;
-const PANEL_MAX = MAX_SPEED;
-const PANEL_STEP = 0.05;
-const PANEL_BUTTON_STEP = 0.25;
-const PANEL_CHIPS = [1, 1.25, 1.5, 2, 2.25, 2.5, 3];
+const SLIDER_STEP = 0.05;   // fine control while dragging
+const BUTTON_STEP = 0.25;   // the -/+ buttons and the keyboard shortcuts
+const PRESETS = [1, 1.25, 1.5, 2, 2.25, 2.5, 3];
+const STORAGE_KEY = "speed";
+const OSD_VISIBLE_MS = 1200;
 
 const findVideoElement = () => document.querySelector("video");
-const clampSpeed = (value) => Math.min(MAX_SPEED, Math.max(MIN_SPEED, value));
 
-// Returns a usable speed or null for anything that is not a finite number.
-function toSpeed(value) {
-    const speed = Number(value);
-    if (!Number.isFinite(speed)) return null;
-    return clampSpeed(speed);
-}
-
+// Compact form used in the menu row: 1 -> "1x", 1.25 -> "1.25x".
 function formatSpeed(speed) {
     return `${Number.parseFloat(Number(speed).toFixed(2))}x`;
 }
 
+// Fixed form used in the panel readout: 1 -> "1.00x".
+function formatSpeedFixed(speed) {
+    return `${Number(speed).toFixed(2)}x`;
+}
+
+// Returns a usable speed, or null for anything that is not a finite number.
+function toSpeed(value) {
+    const speed = Number(value);
+    if (!Number.isFinite(speed)) return null;
+    return Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
+}
+
 async function readStoredSpeed() {
     try {
-        const { speed } = await browser.storage.local.get("speed");
-        const stored = toSpeed(speed);
-        return stored === null ? DEFAULT_SPEED : stored;
+        const { [STORAGE_KEY]: stored } = await browser.storage.local.get(STORAGE_KEY);
+        return toSpeed(stored) ?? DEFAULT_SPEED;
     } catch (error) {
         return DEFAULT_SPEED;
     }
@@ -40,7 +43,7 @@ async function readStoredSpeed() {
 
 async function storeSpeed(speed) {
     try {
-        await browser.storage.local.set({ speed });
+        await browser.storage.local.set({ [STORAGE_KEY]: speed });
     } catch (error) {
         // Storage unavailable: the speed still applies to the current video.
     }
@@ -62,22 +65,19 @@ async function applySpeed(value, persist = true) {
 // Re-applies the remembered speed to whatever video YouTube is showing now.
 async function restoreSpeed() {
     const speed = await readStoredSpeed();
-    if (speed === DEFAULT_SPEED) {
-        updatePlayerUi(DEFAULT_SPEED);
-        return;
-    }
 
     const video = findVideoElement();
-    if (!video) return;
-
-    if (Math.abs(video.playbackRate - speed) > 0.001) video.playbackRate = speed;
+    if (video && speed !== DEFAULT_SPEED && Math.abs(video.playbackRate - speed) > 0.001) {
+        video.playbackRate = speed;
+    }
     updatePlayerUi(speed);
 }
 
-// The keyboard shortcuts are the only caller: step by a fixed amount and show
-// the new speed over the video, the way YouTube's own overlays do.
+// The keyboard shortcuts (Alt+Up / Alt+Down) are the only caller: step by a
+// fixed amount and show the result over the video.
 browser.runtime.onMessage.addListener(async (request) => {
     if (request.action !== "stepSpeed") return undefined;
+
     const video = findVideoElement();
     const current = video ? video.playbackRate : await readStoredSpeed();
     const speed = await applySpeed(current + Number(request.delta || 0));
@@ -86,11 +86,13 @@ browser.runtime.onMessage.addListener(async (request) => {
 });
 
 // ---------------------------------------------------------------------------
-// In-player control: a "Playback speed" row in the gear menu that opens a
-// panel modelled on YouTube's own (but not capped at 2x / Premium).
+// DOM helpers
 // ---------------------------------------------------------------------------
 
 const SVG_NS = "http://www.w3.org/2000/svg";
+const ICON_BACK = "M15.41 7.41 14 6l-6 6 6 6 6-6-1.41-1.41L15.41 12z";
+const ICON_MINUS = "M19 13H5v-2h14v2z";
+const ICON_PLUS = "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z";
 
 function createElement(tag, props = {}, children = []) {
     const el = document.createElement(tag);
@@ -98,7 +100,7 @@ function createElement(tag, props = {}, children = []) {
         if (key === "class") el.className = value;
         else if (key === "text") el.textContent = value;
         else if (key === "dataset") Object.assign(el.dataset, value);
-        else if (key === "attrs") for (const [a, v] of Object.entries(value)) el.setAttribute(a, v);
+        else if (key === "attrs") for (const [name, v] of Object.entries(value)) el.setAttribute(name, v);
         else el[key] = value;
     }
     for (const child of children) el.append(child);
@@ -118,41 +120,42 @@ function createIcon(pathData, size = 24) {
     return svg;
 }
 
-const ICON_BACK = "M15.41 7.41 14 6l-6 6 6 6 6-6-1.41-1.41L15.41 12z";
-const ICON_MINUS = "M19 13H5v-2h14v2z";
-const ICON_PLUS = "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z";
-
-let panel = null;
-let osd = null;
-let osdTimer = null;
-let panelTitle = "Playback speed";
-let settingsItem = null;
-let syncQueued = false;
-
 function playerRoot() {
     return document.querySelector("#movie_player") || document.body;
 }
 
-function chipMatches(chipSpeed, speed) {
-    return Math.abs(chipSpeed - speed) < 0.001;
+function nativeSettingsMenu() {
+    return document.querySelector(".ytp-settings-menu");
 }
 
+// ---------------------------------------------------------------------------
+// In-player panel (styled like YouTube's own speed panel)
+// ---------------------------------------------------------------------------
+
+let panel = null;
+let panelParts = null;   // { value, slider, minus, plus, chips, title }
+let osd = null;
+let osdParts = null;     // { label, value }
+let osdTimer = null;
+let settingsItem = null;
+let syncQueued = false;
+let panelTitle = "Playback speed";   // taken from YouTube's own row, so it is localised
+
 function buildPanel() {
-    const value = createElement("div", { class: "yt3x-value", text: "1.00x" });
+    const value = createElement("div", { class: "yt3x-value", text: formatSpeedFixed(DEFAULT_SPEED) });
 
     const slider = createElement("input", {
         class: "yt3x-slider",
-        id: "yt3x-slider",
         type: "range",
-        min: String(PANEL_MIN),
-        max: String(PANEL_MAX),
-        step: String(PANEL_STEP),
+        min: String(MIN_SPEED),
+        max: String(MAX_SPEED),
+        step: String(SLIDER_STEP),
         attrs: { "aria-label": "Playback speed" },
     });
     // Applying on every input keeps dragging smooth; only the final value is
     // persisted, so a drag does not hammer storage.
     slider.addEventListener("input", () => applySpeed(Number(slider.value), false));
-    slider.addEventListener("change", () => applySpeed(Number(slider.value), true));
+    slider.addEventListener("change", () => applySpeed(Number(slider.value)));
 
     const minus = createElement("button", {
         class: "yt3x-round", type: "button", attrs: { "aria-label": "Slower" },
@@ -161,19 +164,19 @@ function buildPanel() {
         class: "yt3x-round", type: "button", attrs: { "aria-label": "Faster" },
     }, [createIcon(ICON_PLUS)]);
 
-    const step = (direction) => {
+    const stepBy = (direction) => {
         const video = findVideoElement();
-        const current = video ? video.playbackRate : PANEL_MIN;
-        const next = Math.min(PANEL_MAX, Math.max(PANEL_MIN, current + direction * PANEL_BUTTON_STEP));
-        applySpeed(next);
+        const current = video ? video.playbackRate : DEFAULT_SPEED;
+        applySpeed(current + direction * BUTTON_STEP);
     };
-    minus.addEventListener("click", () => step(-1));
-    plus.addEventListener("click", () => step(1));
+    minus.addEventListener("click", () => stepBy(-1));
+    plus.addEventListener("click", () => stepBy(1));
 
     const chips = createElement("div", { class: "yt3x-chips" });
-    for (const speed of PANEL_CHIPS) {
+    for (const speed of PRESETS) {
         const chip = createElement("button", {
-            class: "yt3x-chip", type: "button",
+            class: "yt3x-chip",
+            type: "button",
             text: speed === 1 ? "1.0" : String(speed),
             dataset: { speed: String(speed) },
             attrs: { "aria-pressed": "false" },
@@ -191,7 +194,9 @@ function buildPanel() {
 
     const el = createElement("div", {
         id: "yt3x-panel",
-        attrs: { role: "dialog", "aria-label": "Playback speed" },
+        // focus lands here on open so the slider does not flash its focus ring;
+        // Tab still reaches the controls in order
+        attrs: { role: "dialog", "aria-label": "Playback speed", tabindex: "-1" },
     }, [
         createElement("div", { class: "yt3x-header" }, [back, title]),
         value,
@@ -199,12 +204,13 @@ function buildPanel() {
         chips,
     ]);
     el.hidden = true;
-    el._yt3x = { value, slider, minus, plus, chips, title };
 
     // Clicks inside the panel must not pause/seek the video underneath.
     for (const type of ["click", "dblclick", "pointerdown", "mousedown"]) {
         el.addEventListener(type, (event) => event.stopPropagation());
     }
+
+    panelParts = { value, slider, minus, plus, chips, title };
     return el;
 }
 
@@ -216,20 +222,29 @@ function ensurePanel() {
     return panel;
 }
 
-function nativeMenu() {
-    return document.querySelector(".ytp-settings-menu");
+function openPanel() {
+    ensurePanel();
+    nativeSettingsMenu()?.classList.add("yt3x-hidden");
+    updatePlayerUi(findVideoElement()?.playbackRate ?? DEFAULT_SPEED);
+    panel.hidden = false;
+    panel.focus({ preventScroll: true });
+}
+
+function closePanel() {
+    if (panel) panel.hidden = true;
+    nativeSettingsMenu()?.classList.remove("yt3x-hidden");
+    if (settingsItem) settingsItem.focus({ preventScroll: true });
 }
 
 function buildOsd() {
+    const label = createElement("div", { class: "yt3x-osd-label", text: panelTitle });
+    const value = createElement("div", { class: "yt3x-osd-value", text: formatSpeedFixed(DEFAULT_SPEED) });
     const el = createElement("div", {
         id: "yt3x-osd",
         attrs: { role: "status", "aria-live": "polite" },
         dataset: { visible: "false" },
-    }, [
-        createElement("div", { class: "yt3x-osd-label", text: panelTitle }),
-        createElement("div", { class: "yt3x-osd-value", text: formatSpeed(DEFAULT_SPEED) }),
-    ]);
-    el._yt3x = { label: el.firstChild, value: el.lastChild };
+    }, [label, value]);
+    osdParts = { label, value };
     return el;
 }
 
@@ -245,70 +260,55 @@ function ensureOsd() {
 function showSpeedOsd(speed) {
     if (speed === null || speed === undefined) return;
     const el = ensureOsd();
-    el._yt3x.label.textContent = panelTitle;
-    el._yt3x.value.textContent = `${Number(speed).toFixed(2)}x`;
+    osdParts.label.textContent = panelTitle;
+    osdParts.value.textContent = formatSpeedFixed(speed);
     el.dataset.visible = "true";
     clearTimeout(osdTimer);
-    osdTimer = setTimeout(() => { el.dataset.visible = "false"; }, 1200);
+    osdTimer = setTimeout(() => { el.dataset.visible = "false"; }, OSD_VISIBLE_MS);
 }
 
-function closePanel() {
-    if (panel) panel.hidden = true;
-    nativeMenu()?.classList.remove("yt3x-hidden");
-    if (settingsItem) settingsItem.focus({ preventScroll: true });
-}
-
-function openPanel() {
-    const el = ensurePanel();
-    nativeMenu()?.classList.add("yt3x-hidden");
-    updatePlayerUi(findVideoElement()?.playbackRate ?? DEFAULT_SPEED);
-    el.hidden = false;
-    el._yt3x.slider.focus({ preventScroll: true });
-}
-
-function onDocumentPointerDown(event) {
-    if (!panel || panel.hidden) return;
-    if (panel.contains(event.target)) return;
-    closePanel();
-}
-
-function onDocumentKeyDown(event) {
-    if (event.key === "Escape" && panel && !panel.hidden) {
-        event.stopPropagation();
-        closePanel();
-    }
-}
-
+// Mirrors a speed into the menu row and the panel, which stays in sync even
+// while hidden so opening it never shows a stale value.
 function updatePlayerUi(speed) {
-    const itemContent = settingsItem?.querySelector(".ytp-menuitem-content");
-    if (itemContent) itemContent.textContent = speed === 1 ? "Normal" : formatSpeed(speed);
+    const rowContent = settingsItem?.querySelector(".ytp-menuitem-content");
+    const rowText = speed === 1 ? "Normal" : formatSpeed(speed);
+    if (rowContent && rowContent.textContent !== rowText) rowContent.textContent = rowText;
 
-    // Kept up to date even while hidden, so opening it never shows a stale value.
     ensurePanel();
-    const { value, slider, minus, plus, chips, title } = panel._yt3x;
+    const { value, slider, minus, plus, chips, title } = panelParts;
 
-    title.textContent = panelTitle;
-    value.textContent = `${Number(speed).toFixed(2)}x`;
+    if (title.textContent !== panelTitle) title.textContent = panelTitle;
+    value.textContent = formatSpeedFixed(speed);
 
-    const sliderValue = Math.min(PANEL_MAX, Math.max(PANEL_MIN, speed));
+    const sliderValue = Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
     slider.value = String(sliderValue);
-    const fill = ((sliderValue - PANEL_MIN) / (PANEL_MAX - PANEL_MIN)) * 100;
-    slider.style.setProperty("--yt3x-fill", `${fill}%`);
+    const fillPercent = ((sliderValue - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)) * 100;
+    slider.style.setProperty("--yt3x-fill", `${fillPercent}%`);
 
-    minus.disabled = speed <= PANEL_MIN;
-    plus.disabled = speed >= PANEL_MAX;
+    minus.disabled = speed <= MIN_SPEED;
+    plus.disabled = speed >= MAX_SPEED;
+
     for (const chip of chips.children) {
-        const chipSpeed = Number(chip.dataset.speed);
-        chip.setAttribute("aria-pressed", chipMatches(chipSpeed, speed) ? "true" : "false");
+        const pressed = Math.abs(Number(chip.dataset.speed) - speed) < 0.001;
+        const current = chip.getAttribute("aria-pressed") === "true";
+        if (pressed !== current) chip.setAttribute("aria-pressed", String(pressed));
     }
-
 }
 
-function isSpeedRow(el) {
-    const content = el.querySelector(".ytp-menuitem-content")?.textContent?.trim() ?? "";
-    if (/^[\d.,]+\s*x$/i.test(content)) return true;
-    const label = el.querySelector(".ytp-menuitem-label")?.textContent?.trim() ?? "";
-    return /playback speed|wiedergabegeschwindigkeit|vitesse de lecture|velocidad de reproducci|velocità di riproduzione|velocidade de reprodu|afspeelsnelheid|szybkość odtwarzania|скорость воспроизведения|再生速度|재생 속도/i.test(label);
+// ---------------------------------------------------------------------------
+// The gear-menu row
+// ---------------------------------------------------------------------------
+
+// YouTube labels the row differently per locale, so rely on the value it shows
+// ("Normal", "2x", ...) and fall back to the label.
+const SPEED_ROW_LABEL = /playback speed|wiedergabegeschwindigkeit|vitesse de lecture|velocidad de reproducci|velocità di riproduzione|velocidade de reprodu|afspeelsnelheid|szybkość odtwarzania|скорость воспроизведения|再生速度|재생 속도/i;
+const SPEED_ROW_VALUE = /^[\d.,]+\s*x$/i;
+
+function isSpeedRow(row) {
+    const content = row.querySelector(".ytp-menuitem-content")?.textContent?.trim() ?? "";
+    if (SPEED_ROW_VALUE.test(content)) return true;
+    const label = row.querySelector(".ytp-menuitem-label")?.textContent?.trim() ?? "";
+    return SPEED_ROW_LABEL.test(label);
 }
 
 function buildSettingsItem() {
@@ -324,33 +324,31 @@ function buildSettingsItem() {
 }
 
 function attachSettingsItemHandlers(item) {
-    item.addEventListener("click", (event) => {
+    const activate = (event) => {
         event.preventDefault();
         event.stopPropagation();
         openPanel();
-    });
+    };
+    item.addEventListener("click", activate);
     item.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            event.stopPropagation();
-            openPanel();
-        }
+        if (event.key === "Enter" || event.key === " ") activate(event);
     });
 }
 
-// YouTube rebuilds the settings menu on every open, so re-inject ours whenever
-// the menu is (re)rendered, and keep its value in sync.
+// YouTube rebuilds the settings menu on every open, so ours is re-injected
+// whenever that happens.
 function syncSettingsItem() {
     syncQueued = false;
-    const menu = document.querySelector(".ytp-settings-menu");
+
+    const menu = nativeSettingsMenu();
     if (!menu) return;
 
-    if (!panel || !panel.isConnected) ensurePanel();
+    ensurePanel();
 
     const root = menu.querySelector(".ytp-panel-menu");
     if (!root) return;
 
-    const rows = [...root.querySelectorAll(".ytp-menuitem")].filter((el) => el.id !== "yt3x-menuitem");
+    const rows = [...root.querySelectorAll(".ytp-menuitem")].filter((row) => row.id !== "yt3x-menuitem");
     const nativeRow = rows.find(isSpeedRow) ?? null;
 
     if (nativeRow) {
@@ -369,15 +367,28 @@ function syncSettingsItem() {
         else root.append(settingsItem);
     }
 
-    // Keep our row where YouTube's own speed row is, even after the menu is
-    // rebuilt or reordered on a later open.
+    // Keep our row exactly where YouTube's own row is, even if the menu was
+    // rebuilt in a different order.
     if (nativeRow && settingsItem.nextElementSibling !== nativeRow) {
         nativeRow.parentNode.insertBefore(settingsItem, nativeRow);
     }
 
     updatePlayerUi(findVideoElement()?.playbackRate ?? DEFAULT_SPEED);
+}
 
-    if (panel && !panel.hidden && playerRoot().classList.contains("ytp-autohide")) closePanel();
+// Only react to mutations that actually touch the settings menu: YouTube
+// mutates the page constantly and this observer must stay cheap.
+function touchesSettingsMenu(records) {
+    for (const record of records) {
+        const target = record.target instanceof Element ? record.target : record.target.parentElement;
+        if (target && target.closest(".ytp-settings-menu")) return true;
+        for (const node of record.addedNodes) {
+            if (!(node instanceof Element)) continue;
+            if (node.classList.contains("ytp-settings-menu")) return true;
+            if (node.querySelector(".ytp-settings-menu, .ytp-panel-menu, .ytp-menuitem")) return true;
+        }
+    }
+    return false;
 }
 
 function scheduleSync() {
@@ -386,36 +397,65 @@ function scheduleSync() {
     requestAnimationFrame(syncSettingsItem);
 }
 
-const playerObserver = new MutationObserver(scheduleSync);
-playerObserver.observe(document.documentElement, { childList: true, subtree: true });
+const menuObserver = new MutationObserver((records) => {
+    if (touchesSettingsMenu(records)) scheduleSync();
+});
+menuObserver.observe(document.documentElement, { childList: true, subtree: true });
 
-document.addEventListener("pointerdown", onDocumentPointerDown, true);
-document.addEventListener("keydown", onDocumentKeyDown, true);
+// The player hides its controls after a moment of inactivity; do not leave the
+// panel floating over a hidden control bar.
+const autohideObserver = new MutationObserver(() => {
+    if (panel && !panel.hidden && playerRoot().classList.contains("ytp-autohide")) closePanel();
+});
+let autohideTarget = null;
+function watchAutohide() {
+    const root = document.querySelector("#movie_player");
+    if (!root || root === autohideTarget) return;
+    autohideObserver.disconnect();
+    autohideObserver.observe(root, { attributes: true, attributeFilter: ["class"] });
+    autohideTarget = root;
+}
+
+// ---------------------------------------------------------------------------
+// Wiring
+// ---------------------------------------------------------------------------
+
+document.addEventListener("pointerdown", (event) => {
+    if (panel && !panel.hidden && !panel.contains(event.target)) closePanel();
+}, true);
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && panel && !panel.hidden) {
+        event.stopPropagation();
+        closePanel();
+    }
+}, true);
 
 // Keep the UI truthful when the rate changes from anywhere (YouTube's own
-// menu, the toolbar popup or the keyboard shortcuts).
+// menu or the keyboard shortcuts).
 document.addEventListener("ratechange", (event) => {
     if (event.target instanceof HTMLVideoElement) updatePlayerUi(event.target.playbackRate);
 }, true);
 
 // YouTube replaces or reuses the video element on navigation, ads and player
-// rebuilds, and its own player resets the rate. Re-apply on every new media.
+// rebuilds, and its own player resets the rate. Re-apply to every new media.
 document.addEventListener("loadedmetadata", (event) => {
     if (event.target instanceof HTMLVideoElement) restoreSpeed();
 }, true);
 
-// The script can be injected after the first metadata event already fired, so
+// This script can be injected after the first metadata event already fired, so
 // poll briefly (never forever) until a playable video shows up.
-(function syncWhenVideoAppears() {
+(function waitForVideo() {
     let attempts = 0;
     const check = () => {
         const video = findVideoElement();
         if (video && video.readyState >= 1) {
+            watchAutohide();
             restoreSpeed();
             scheduleSync();
             return;
         }
-        if (++attempts > 40) return; // give up after ~20s; loadedmetadata covers the rest
+        if (++attempts > 40) return; // ~20s, then rely on loadedmetadata
         setTimeout(check, 500);
     };
     check();

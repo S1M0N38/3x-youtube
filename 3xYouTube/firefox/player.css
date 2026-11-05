@@ -5,6 +5,18 @@
     display: none !important;
 }
 
+/* Shared surface for the panel and the transient readout: dark, rounded,
+   blurred, matching the player's own overlays. */
+#yt3x-panel,
+#yt3x-osd {
+    border-radius: 12px;
+    background: rgba(28, 28, 28, 0.92);
+    backdrop-filter: blur(12px);
+    color: #fff;
+    font-family: Roboto, Arial, sans-serif;
+    line-height: 1.2;
+}
+
 #yt3x-panel {
     position: absolute;
     right: 12px;
@@ -12,12 +24,7 @@
     z-index: 72;
     width: 384px;
     padding: 8px 0 14px;
-    border-radius: 12px;
-    background: rgba(28, 28, 28, 0.92);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(12px);
-    color: #fff;
-    font-family: Roboto, Arial, sans-serif;
     font-size: 15px;
     text-align: left;
     direction: ltr;
@@ -27,6 +34,10 @@
 
 #yt3x-panel[hidden] {
     display: none;
+}
+
+#yt3x-panel:focus {
+    outline: none;
 }
 
 .yt3x-header {
@@ -99,7 +110,7 @@
 }
 
 /* range input: white fill up to the thumb, like YouTube's own slider */
-#yt3x-slider {
+.yt3x-slider {
     flex: 1 1 auto;
     height: 18px;
     margin: 0;
@@ -109,7 +120,7 @@
     cursor: pointer;
 }
 
-#yt3x-slider::-webkit-slider-runnable-track {
+.yt3x-slider::-webkit-slider-runnable-track {
     height: 4px;
     border-radius: 2px;
     background: linear-gradient(to right,
@@ -117,19 +128,19 @@
         rgba(255, 255, 255, 0.34) var(--yt3x-fill, 0%));
 }
 
-#yt3x-slider::-moz-range-track {
+.yt3x-slider::-moz-range-track {
     height: 4px;
     border-radius: 2px;
     background: rgba(255, 255, 255, 0.34);
 }
 
-#yt3x-slider::-moz-range-progress {
+.yt3x-slider::-moz-range-progress {
     height: 4px;
     border-radius: 2px;
     background: #fff;
 }
 
-#yt3x-slider::-webkit-slider-thumb {
+.yt3x-slider::-webkit-slider-thumb {
     width: 16px;
     height: 16px;
     margin-top: -6px;
@@ -140,7 +151,7 @@
     -webkit-appearance: none;
 }
 
-#yt3x-slider::-moz-range-thumb {
+.yt3x-slider::-moz-range-thumb {
     width: 16px;
     height: 16px;
     border: 0;
@@ -148,7 +159,7 @@
     background: #fff;
 }
 
-#yt3x-slider:focus-visible {
+.yt3x-slider:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 4px;
     border-radius: 4px;
@@ -184,9 +195,7 @@
     font-weight: 500;
 }
 
-
-/* Transient speed readout shown when the keyboard shortcuts change the speed.
-   Modelled on YouTube's own bezel overlays: dark rounded card, big number. */
+/* Transient speed readout shown when the keyboard shortcuts change the speed. */
 #yt3x-osd {
     position: absolute;
     top: 12%;
@@ -197,12 +206,7 @@
     align-items: center;
     gap: 2px;
     padding: 12px 26px 14px;
-    border-radius: 12px;
-    background: rgba(28, 28, 28, 0.9);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(12px);
-    color: #fff;
-    font-family: Roboto, Arial, sans-serif;
     transform: translateX(-50%);
     pointer-events: none;
     opacity: 0;

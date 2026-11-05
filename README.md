@@ -1,81 +1,92 @@
 ## 3x YouTube Browser Extension
 
-***3x YouTube*** is software that locates
-a video element being rendered on any webpage
-(designed to target YouTube videos) and modifies
-the HTMLMediaElement playbackRate property
-with a custom value specified through the
-browser extensions user interface. <br/>
-
-By default YouTube has a limit of 2x default speed
-when setting custom a playback rate for a video.
-This browser extension allows users to easily set custom
-playback speeds of anywhere between 0.25x and 3x. <br/>
-
-## In-player control
-
 YouTube caps its own speed menu at 2x and puts 3x behind Premium. This
-extension replaces that row in the player's gear menu with one that opens a
-matching panel: a slider from 0.25x to 3x plus presets
-(1.0 · 1.25 · 1.5 · 2.0 · 2.25 · 2.5 · 3.0). YouTube's original row is hidden,
-so there is a single place to change the speed in the player.
+extension replaces that row in the player's settings menu with one that is not
+capped, so 3x is available like any other speed.
 
-There is no toolbar popup: the player is the only place the speed is set. The
-chosen speed is remembered and re-applied on every new video, and it can also
-be changed from the keyboard:
+![Playback speed panel](docs/panel.jpg)
 
-| Shortcut | Action |
-| --- | --- |
-| <kbd>Alt</kbd>+<kbd>↑</kbd> | +0.25x |
-| <kbd>Alt</kbd>+<kbd>↓</kbd> | −0.25x |
+## What you get
 
-Each keypress shows the new speed in a large overlay over the video (styled
-like YouTube's own shortcut overlays) and keeps the gear-menu panel in sync,
-so opening it always shows the speed that is actually playing.
+- **Gear menu → Playback speed**: a panel modelled on YouTube's own, with a
+  slider from 0.25x to 3x and the presets
+  1.0 · 1.25 · 1.5 · 2.0 · 2.25 · 2.5 · 3.0.
+- **One place to set the speed**: YouTube's original row is hidden, so the
+  Premium-gated 3x is simply unlocked instead of duplicated.
+- **It sticks**: the chosen speed is stored locally and re-applied to every new
+  video, on navigation and on player rebuilds.
+- **Keyboard**: <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd> step by
+  0.25x and show a large speed readout over the video. The panel and the menu
+  row stay in sync, so opening them always shows what is playing.
+- **No toolbar button**, no popup, no extra UI outside the player.
 
-## Browser Compatibility
+## Installation (Firefox or a Firefox-based browser)
 
-This repository contains a single build, in `3xYouTube/firefox`,
-which utilizes Manifest V2 and is designed to work with Firefox
-(and Firefox based browsers).
-
-Available for FireFox here: [https://addons.mozilla.org/en-US/firefox/addon/3xyoutube/](https://addons.mozilla.org/en-US/firefox/addon/3xyoutube/)
-
-## Installation
-
-### Option 1 — load it once per session
+### Temporary (until the browser restarts)
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click *Load Temporary Add-on…* and select `3xYouTube/firefox/manifest.json`.
-3. The extension is active until Firefox restarts; repeat after every restart.
+3. Play any video and open the player's gear menu.
 
-### Option 2 — run it with web-ext (auto-reloads when you edit the source)
+Repeat step 2 after every browser restart.
+
+### With web-ext (reloads the extension when you edit the source)
 
 ```sh
 npx web-ext run --source-dir 3xYouTube/firefox
 ```
 
-On a Firefox fork, point it at that binary instead, for example Zen:
+On a Firefox fork, point it at that binary instead:
 
 ```sh
 npx web-ext run --source-dir 3xYouTube/firefox \
   --firefox /Applications/Zen.app/Contents/MacOS/zen
 ```
 
-Either way the extension is installed into a throwaway profile, so your
-day-to-day profile stays untouched.
+### Permanent
 
-> A permanent install needs the XPI signed by
-> [addons.mozilla.org](https://addons.mozilla.org/developers/); release builds of
-> Firefox refuse unsigned extensions
-> (`xpinstall.signatures.required = false` only works on Nightly/Developer Edition).
+A permanent install needs an XPI signed by
+[addons.mozilla.org](https://addons.mozilla.org/developers/). Release builds of
+Firefox refuse unsigned extensions — `xpinstall.signatures.required = false`
+only has an effect on Nightly/Developer Edition.
 
 ## Usage
 
-Click the gear icon in the player, then *Playback speed*: the panel shows the
-current speed, a slider from 0.25x to 3x, and the presets
-1.0 · 1.25 · 1.5 · 2.0 · 2.25 · 2.5 · 3.0. The value is stored locally
-(`storage.local`) and nothing leaves your machine.
+Open the player's gear menu, choose *Playback speed*, then drag the slider,
+press ⊖/⊕ (±0.25x) or pick a preset. *‹* closes the panel and returns to the
+settings menu.
 
-The extension adds no toolbar button; uninstalling it or removing the add-on
-brings YouTube's own speed row back on the next page load.
+Keyboard shortcuts work without opening any menu, and each press shows the new
+speed for a moment over the video.
+
+## Notes and limitations
+
+- The extension injects its row into YouTube's own settings menu and hides the
+  native one. If YouTube changes that markup, the worst case is that both rows
+  appear; nothing else breaks.
+- The row label is copied from YouTube's row, so it follows the player's
+  language.
+- The rate is applied to whatever media the player is showing, ads included.
+- Requires Firefox 142+ (the manifest declares
+  `data_collection_permissions`, which older versions do not know).
+- Everything is local: the chosen speed is the only thing stored, in
+  `storage.local`.
+
+## Development
+
+```sh
+npx web-ext lint --source-dir 3xYouTube/firefox   # 0 errors, 0 warnings
+```
+
+After editing, reload the temporary add-on in `about:debugging` (or let
+`web-ext run` do it) and refresh the YouTube tab.
+
+## Files
+
+| File | Purpose |
+| --- | --- |
+| `manifest.json` | Manifest V2, permissions, keyboard commands |
+| `content.js` | Playback rate handling, panel, on-screen readout, menu row |
+| `player.css` | Styling for the panel and the readout |
+| `background.js` | Maps the keyboard shortcuts to messages for the active tab |
+| `icons/` | Icon set (16/32/48/96/128) |
