@@ -10,11 +10,19 @@ browser extensions user interface. <br/>
 By default YouTube has a limit of 2x default speed
 when setting custom a playback rate for a video.
 This browser extension allows users to easily set custom
-playback speeds of anywhere between 0.1x and 16x. <br/>
+playback speeds of anywhere between 0.1x and 3x. <br/>
 
-The chosen speed is remembered and re-applied on every
-new video, and it can also be changed without opening
-the popup:
+## In-player control
+
+YouTube caps its own speed menu at 2x and puts 3x behind Premium. This
+extension replaces that row in the player's gear menu with one that opens a
+matching panel: a slider from 0.25x to 3x plus presets
+(1.0 · 1.25 · 1.5 · 2.0 · 2.25 · 2.5 · 3.0). YouTube's original row is hidden,
+so there is a single place to change the speed in the player.
+
+There is no toolbar popup: the player is the only place the speed is set. The
+chosen speed is remembered and re-applied on every new video, and it can also
+be changed from the keyboard:
 
 | Shortcut | Action |
 | --- | --- |
@@ -61,7 +69,10 @@ day-to-day profile stays untouched.
 
 ## Usage
 
-Open the toolbar popup on any YouTube video to read the current speed, pick a
-preset, or type any value between 0.1x and 16x. *Reset to 1x* goes back to
-normal speed. The value is stored locally (`storage.local`) and nothing leaves
-your machine.
+Click the gear icon in the player, then *Playback speed*: the panel shows the
+current speed, a slider from 0.25x to 3x, and the presets
+1.0 · 1.25 · 1.5 · 2.0 · 2.25 · 2.5 · 3.0. The value is stored locally
+(`storage.local`) and nothing leaves your machine.
+
+The extension adds no toolbar button; uninstalling it or removing the add-on
+brings YouTube's own speed row back on the next page load.

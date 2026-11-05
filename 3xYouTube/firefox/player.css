@@ -1,0 +1,186 @@
+/* In-player playback speed control. Uses YouTube's own class names for the
+   menu row, and a standalone panel styled like the player's speed panel. */
+
+.yt3x-hidden {
+    display: none !important;
+}
+
+#yt3x-panel {
+    position: absolute;
+    right: 12px;
+    bottom: 56px;
+    z-index: 72;
+    width: 384px;
+    padding: 8px 0 14px;
+    border-radius: 12px;
+    background: rgba(28, 28, 28, 0.92);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    color: #fff;
+    font-family: Roboto, Arial, sans-serif;
+    font-size: 15px;
+    text-align: left;
+    direction: ltr;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#yt3x-panel[hidden] {
+    display: none;
+}
+
+.yt3x-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 4px 16px 8px;
+}
+
+.yt3x-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-left: -8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.yt3x-back:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.yt3x-title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.yt3x-value {
+    margin: 10px 0 20px;
+    font-size: 29px;
+    font-weight: 500;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.yt3x-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 18px;
+}
+
+.yt3x-round {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    cursor: pointer;
+}
+
+.yt3x-round:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.yt3x-round:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* range input: white fill up to the thumb, like YouTube's own slider */
+#yt3x-slider {
+    flex: 1 1 auto;
+    height: 18px;
+    margin: 0;
+    background: none;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+#yt3x-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right,
+        #fff var(--yt3x-fill, 0%),
+        rgba(255, 255, 255, 0.34) var(--yt3x-fill, 0%));
+}
+
+#yt3x-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.34);
+}
+
+#yt3x-slider::-moz-range-progress {
+    height: 4px;
+    border-radius: 2px;
+    background: #fff;
+}
+
+#yt3x-slider::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+#yt3x-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+}
+
+#yt3x-slider:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+.yt3x-chips {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    padding: 18px 18px 0;
+}
+
+.yt3x-chip {
+    padding: 8px 0;
+    border: 0;
+    border-radius: 18px;
+    text-align: center;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.yt3x-chip:hover {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+.yt3x-chip[aria-pressed="true"] {
+    background: #fff;
+    color: #0f0f0f;
+    font-weight: 500;
+}
+

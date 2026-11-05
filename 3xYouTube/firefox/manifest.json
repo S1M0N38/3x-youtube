@@ -1,32 +1,31 @@
 {
   "manifest_version": 2,
   "name": "3xYouTube",
-  "version": "1.1",
-  "description": "Increase YouTube playback speed beyond 2x, up to 16x, and remember it.",
+  "version": "1.3",
+  "description": "Increase YouTube playback speed up to 3x straight from the player settings menu.",
   "permissions": [
     "storage",
     "*://www.youtube.com/*"
   ],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": [
+      "background.js"
+    ],
     "persistent": false
   },
   "content_scripts": [
     {
-      "matches": ["*://www.youtube.com/*"],
-      "js": ["content.js"]
+      "matches": [
+        "*://www.youtube.com/*"
+      ],
+      "css": [
+        "player.css"
+      ],
+      "js": [
+        "content.js"
+      ]
     }
   ],
-  "browser_action": {
-    "default_popup": "menu.html",
-    "default_icon": {
-      "16": "icons/3xyt-16.png",
-      "32": "icons/3xyt-32.png",
-      "48": "icons/3xyt-48.png",
-      "96": "icons/3xyt-96.png",
-      "128": "icons/3xyt-128.png"
-    }
-  },
   "icons": {
     "16": "icons/3xyt-16.png",
     "32": "icons/3xyt-32.png",
@@ -36,15 +35,21 @@
   },
   "commands": {
     "speed-up": {
-      "suggested_key": { "default": "Alt+Up" },
+      "suggested_key": {
+        "default": "Alt+Up"
+      },
       "description": "Increase playback speed"
     },
     "speed-down": {
-      "suggested_key": { "default": "Alt+Down" },
+      "suggested_key": {
+        "default": "Alt+Down"
+      },
       "description": "Decrease playback speed"
     },
     "speed-reset": {
-      "suggested_key": { "default": "Alt+0" },
+      "suggested_key": {
+        "default": "Alt+0"
+      },
       "description": "Reset playback speed to 1x"
     }
   },
@@ -53,7 +58,9 @@
       "id": "3xyoutube@ipflux.io",
       "strict_min_version": "142.0",
       "data_collection_permissions": {
-        "required": ["none"]
+        "required": [
+          "none"
+        ]
       }
     }
   }
