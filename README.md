@@ -1,5 +1,7 @@
 ## 3xYouTube
 
+> This extension started as a fork of [nathvnt/3x-youtube](https://github.com/nathvnt/3x-youtube) and evolve a lot since then. Big thanks to the original author :)
+
 YouTube caps its own speed menu at 2x and keeps 3x behind Premium. This
 extension replaces that row in the player's settings menu with an equivalent
 one that goes up to 3x, and it remembers the speed you pick.
