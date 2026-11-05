@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <!-- 3xYouTube: YouTube's logo rectangle (28.57 x 20 box, 3.578 corner radius)
+       in YouTube red, with the player's own "playback speed" gauge in place of
+       the play triangle. The gauge path is verbatim from the SVG YouTube ships
+       in the player's settings menu (24 x 24 viewBox); everything above sits in
+       a 0 0 500 500 box, logo width 490. -->
+  <rect x="5" y="78.4914" width="490" height="343.0172" rx="61.3658" fill="#FF0000"/>
+  <path d="M12 1c1.44 0 2.87.28 4.21.83a11 11 0 0 1 3.45 2.27l-1.81 1.05A9 9 0 0 0 3 12a9 9 0 0 0 18-.00l-.01-.44a8.99 8.99 0 0 0-.14-1.20l1.81-1.05A11.00 11.00 0 0 1 10.51 22.9 11 11 0 0 1 12 1Zm7.08 6.25-7.96 3.25a1.74 1.74 0 1 0 1.73 2.99l6.8-5.26a.57.57 0 0 0-.56-.98Z" fill="#fff" transform="translate(143.6647 143.6647) scale(8.861276)"/>
+</svg>
