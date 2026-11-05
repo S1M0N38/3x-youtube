@@ -1,18 +1,12 @@
 {
   "manifest_version": 2,
   "name": "3xYouTube",
-  "version": "1.6",
+  "version": "1.7",
   "description": "Increase YouTube playback speed up to 3x straight from the player settings menu.",
   "permissions": [
     "storage",
     "*://www.youtube.com/*"
   ],
-  "background": {
-    "scripts": [
-      "background.js"
-    ],
-    "persistent": false
-  },
   "content_scripts": [
     {
       "matches": [
@@ -32,20 +26,6 @@
     "48": "icons/3xyt-48.png",
     "96": "icons/3xyt-96.png",
     "128": "icons/3xyt-128.png"
-  },
-  "commands": {
-    "speed-up": {
-      "suggested_key": {
-        "default": "Alt+Up"
-      },
-      "description": "Increase playback speed"
-    },
-    "speed-down": {
-      "suggested_key": {
-        "default": "Alt+Down"
-      },
-      "description": "Decrease playback speed"
-    }
   },
   "browser_specific_settings": {
     "gecko": {

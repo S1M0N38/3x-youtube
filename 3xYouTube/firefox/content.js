@@ -9,7 +9,7 @@ const MIN_SPEED = 0.25;
 const MAX_SPEED = 3;
 const SLIDER_STEP = 0.05;   // fine control while dragging
 const BUTTON_STEP = 0.25;   // the -/+ buttons and the keyboard shortcuts
-const PRESETS = [1, 1.25, 1.5, 2, 2.25, 2.5, 3];
+const PRESETS = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3];
 const STORAGE_KEY = "speed";
 const OSD_VISIBLE_MS = 1200;
 
@@ -72,18 +72,6 @@ async function restoreSpeed() {
     }
     updatePlayerUi(speed);
 }
-
-// The keyboard shortcuts (Alt+Up / Alt+Down) are the only caller: step by a
-// fixed amount and show the result over the video.
-browser.runtime.onMessage.addListener(async (request) => {
-    if (request.action !== "stepSpeed") return undefined;
-
-    const video = findVideoElement();
-    const current = video ? video.playbackRate : await readStoredSpeed();
-    const speed = await applySpeed(current + Number(request.delta || 0));
-    showSpeedOsd(speed);
-    return { status: "success", speed };
-});
 
 // ---------------------------------------------------------------------------
 // DOM helpers
@@ -179,7 +167,7 @@ function buildPanel() {
         const chip = createElement("button", {
             class: "yt3x-chip",
             type: "button",
-            text: speed === 1 ? "1.0" : String(speed),
+            text: Number.isInteger(speed) ? speed.toFixed(1) : String(speed),
             dataset: { speed: String(speed) },
             attrs: { "aria-pressed": "false" },
         });
@@ -464,18 +452,35 @@ document.addEventListener("pointerdown", (event) => {
     if (panel && !panel.hidden && !panel.contains(event.target)) closePanel();
 }, true);
 
+const SHORTCUT_KEYS = { ArrowUp: 1, ArrowDown: -1 };
+
+function isEditable(element) {
+    if (!(element instanceof Element)) return false;
+    return element.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(element.tagName);
+}
+
+// Alt+Up / Alt+Down step the speed. This lives in the page (rather than in a
+// browser command) because cancelling the key's default action is what stops
+// the page from scrolling, and cancelling it would swallow the command too.
+function stepSpeed(direction) {
+    const video = findVideoElement();
+    const current = video ? video.playbackRate : DEFAULT_SPEED;
+    applySpeed(current + direction * BUTTON_STEP).then((speed) => showSpeedOsd(speed));
+}
+
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && panel && !panel.hidden) {
         event.stopPropagation();
         closePanel();
         return;
     }
-    // The shortcuts are handled by the browser (see background.js); cancelling
-    // the default here stops the page from scrolling at the same time.
-    if (event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey
-        && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
-        event.preventDefault();
-    }
+
+    const direction = SHORTCUT_KEYS[event.key];
+    if (!direction || !event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (isEditable(event.target)) return;
+
+    event.preventDefault();
+    stepSpeed(direction);
 }, true);
 
 // Keep the UI truthful when the rate changes from anywhere (YouTube's own

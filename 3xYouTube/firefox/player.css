@@ -171,7 +171,7 @@
 
 .yt3x-chips {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 6px;
     padding: 18px 18px 0;
 }

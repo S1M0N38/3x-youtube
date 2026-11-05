@@ -10,13 +10,14 @@ capped, so 3x is available like any other speed.
 
 - **Gear menu → Playback speed**: a panel modelled on YouTube's own, with a
   slider from 0.25x to 3x and the presets
-  1.0 · 1.25 · 1.5 · 2.0 · 2.25 · 2.5 · 3.0.
+  1.0 · 1.25 · 1.5 · 1.75 · 2.0 · 2.25 · 2.5 · 2.75 · 3.0.
 - **One place to set the speed**: YouTube's original row is hidden, so the
   Premium-gated 3x is simply unlocked instead of duplicated.
 - **It sticks**: the chosen speed is stored locally and re-applied to every new
   video, on navigation and on player rebuilds.
 - **Keyboard**: <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd> step by
-  0.25x and show a large speed readout over the video. The panel and the menu
+  0.25x and show a large speed readout over the video. They are handled inside
+  the page, so the page does not scroll at the same time. The panel and the menu
   row stay in sync, so opening them always shows what is playing.
 - **No toolbar button**, no popup, no extra UI outside the player.
 
@@ -88,5 +89,4 @@ After editing, reload the temporary add-on in `about:debugging` (or let
 | `manifest.json` | Manifest V2, permissions, keyboard commands |
 | `content.js` | Playback rate handling, panel, on-screen readout, menu row |
 | `player.css` | Styling for the panel and the readout |
-| `background.js` | Maps the keyboard shortcuts to messages for the active tab |
 | `icons/` | Icon set (16/32/48/96/128) |
