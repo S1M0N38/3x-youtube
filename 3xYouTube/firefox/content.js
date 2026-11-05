@@ -9,7 +9,7 @@ const MIN_SPEED = 0.25;
 const MAX_SPEED = 3;
 const SLIDER_STEP = 0.05;   // fine control while dragging
 const BUTTON_STEP = 0.25;   // the -/+ buttons and the keyboard shortcuts
-const PRESETS = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3];
+const PRESETS = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5];
 const STORAGE_KEY = "speed";
 const OSD_VISIBLE_MS = 1200;
 
