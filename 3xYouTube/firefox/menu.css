@@ -1,29 +1,43 @@
+:root {
+    --red: #ff0000;          /* decorative accents only */
+    --red-strong: #b30000;   /* backgrounds carrying white text (AA contrast) */
+    --text: #ffffff;
+    --muted: #bbbbbb;
+    --surface: #262626;
+    --field: #404040;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: Arial, sans-serif;
-    width: 240px;
+    width: 262px;
     text-align: center;
     background: #1e1e1e;
-    color: white;
+    color: var(--text);
 }
 
 #menuWrapper {
     padding: 4px;
     border-radius: 8px;
-    background-image: linear-gradient(to bottom right, white, #ff0000);
+    background-image: linear-gradient(to bottom right, white, var(--red));
 }
 
 #menuContainer {
-    padding: 5px;
+    padding: 8px 6px;
     border-radius: 6px;
-    background-color: #262626; 
+    background-color: var(--surface);
 }
 
 /* main title */
 #title {
     font-size: 24px;
     font-weight: bold;
-    color: white;
-    text-shadow: 2px 2px 5px #ff0000; 
+    color: var(--text);
+    text-shadow: 2px 2px 5px var(--red);
+    margin: 4px 0 10px;
 }
 
 /* current speed title + display */
@@ -31,14 +45,14 @@ h3 {
     font-size: 14px;
     font-weight: bold;
     font-style: italic;
-    margin-bottom: 5px;
+    margin: 0 0 5px;
 }
 
 #currentSpeed {
     font-size: 18px;
     font-weight: bold;
-    color: #ff0000;
-    margin-bottom: 15px;
+    color: #ff6b6b;
+    margin-bottom: 12px;
 }
 
 /* custom speed input */
@@ -48,69 +62,118 @@ h3 {
     font-weight: bold;
     margin-bottom: 5px;
 }
+
 input {
-    width: 90%;
+    width: 100%;
     padding: 8px;
     font-size: 16px;
     margin-bottom: 10px;
     text-align: center;
     border: 1px solid white;
     border-radius: 6px;
-    background: #404040;
-    color: white;
+    background: var(--field);
+    color: var(--text);
+}
+
+input:focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
 }
 
 /* button styles */
 .button {
     display: inline-block;
-    margin: 10px 5px;
+    margin: 6px 4px;
+    font: inherit;
     font-weight: bold;
     text-align: center;
-    color: white;
-    border: 2px solid #ff0000;
+    color: var(--text);
+    background: transparent;
+    border: 2px solid var(--red);
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    box-shadow: 0 0 5px transparent; 
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 0 5px transparent;
 }
 
 .button:hover {
     box-shadow: 0 0 12px rgba(255, 0, 0, 0.75);
 }
 
+.button:focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
+}
+
 /* speed apply button */
 #setSpeed {
-    width: 75%;
-    padding: 12px 0;
+    width: 90%;
+    padding: 10px 0;
     font-size: 16px;
-    background-color: #ff0000;
+    background-color: var(--red-strong);
 }
+
 #setSpeed:hover {
     background-color: transparent;
 }
 
 /* speed reset button */
 #resetSpeed {
-    width: 45%;
-    padding: 8px 0;
-    font-size: 14px;
-    background-color: transparent;
+    width: 60%;
+    padding: 7px 0;
+    font-size: 13px;
 }
+
 #resetSpeed:hover {
-    background-color: #ff0000;
+    background-color: var(--red-strong);
 }
 
 /* buttons for speed options */
-.speed-option {
-    padding: 6px 10px;
-    font-size: 12px;
-    background: transparent;
+#presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin: 4px 4px 6px;
 }
+
+.speed-option {
+    padding: 6px 0;
+    margin: 0;
+    font-size: 12px;
+}
+
 .speed-option:hover {
-    background-color: #ff0000;
+    background-color: var(--red-strong);
 }
 
 /* button slight shrink click effect */
 .button:active {
     transform: scale(0.95);
+}
+
+/* inline feedback */
+#status {
+    min-height: 1em;
+    margin: 6px 2px 0;
+    font-size: 11px;
+    color: #ffb3b3;
+}
+
+#status:empty {
+    margin-top: 0;
+}
+
+.hint {
+    margin: 6px 2px 2px;
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+kbd {
+    font-family: inherit;
+    font-weight: bold;
+    padding: 0 2px;
+    border: 1px solid #555;
+    border-radius: 3px;
 }

@@ -1,65 +1,100 @@
-document.addEventListener("DOMContentLoaded", () => {
+const MIN_SPEED = 0.1;
+const MAX_SPEED = 16;
+
+document.addEventListener("DOMContentLoaded", async () => {
     const speedInput = document.getElementById("speedInput");
     const setSpeedButton = document.getElementById("setSpeed");
     const resetSpeedButton = document.getElementById("resetSpeed");
     const speedButtons = document.querySelectorAll(".speed-option");
     const currentSpeedDisplay = document.getElementById("currentSpeed");
+    const status = document.getElementById("status");
 
-    //trim extra decimal place when displaying current speed
+    // The limits live in one place; mirror them onto the input.
+    speedInput.min = String(MIN_SPEED);
+    speedInput.max = String(MAX_SPEED);
+
+    const setStatus = (message) => { status.textContent = message || ""; };
+    const formatSpeed = (speed) => `${Number.parseFloat(Number(speed).toFixed(2))}x`;
+
     function updateCurrentSpeed(speed) {
-        currentSpeedDisplay.textContent = `${parseFloat(speed)}x`;
+        currentSpeedDisplay.textContent = speed === null ? "—" : formatSpeed(speed);
     }
 
-    //requesting current playback speed for display when menu ui opens
-    browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        browser.tabs.sendMessage(tabs[0].id, { action: "getSpeed" }, (response) => {
-            if (browser.runtime.lastError) {
-                console.warn("an error getting speed:", browser.runtime.lastError.message);
-                return;
-            }
-            if (response && response.speed) {
-                updateCurrentSpeed(response.speed);
-            } else {
-                console.warn("there was no speed data received.");
-            }
-        });
-    });
-
-    //updating custom input with current applied speed
-    function updateSpeed(value) {
-        speedInput.value = value;
-        applySpeed();
+    function parseSpeed(value) {
+        const speed = Number.parseFloat(value);
+        return Number.isFinite(speed) ? speed : null;
     }
 
-    //applying the user specified custom playback speed
-    function applySpeed() {
-        const speed = parseFloat(speedInput.value);
-        if (speed >= 0.1 && speed <= 10) {
-            browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                browser.tabs.sendMessage(tabs[0].id, { action: "setSpeed", speed: speed });
-            });
+    async function sendToVideo(message) {
+        try {
+            const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+            if (!tab || tab.id === undefined) return { error: "no active tab" };
+            return { response: await browser.tabs.sendMessage(tab.id, message) };
+        } catch (error) {
+            return { error: error.message };
         }
     }
 
-    //resseting playback to default 1x 
-    resetSpeedButton.addEventListener("click", () => {
-        updateSpeed(1);
+    // Applying the user specified custom playback speed.
+    async function applySpeed(value) {
+        const speed = parseSpeed(value);
+        if (speed === null || speed < MIN_SPEED || speed > MAX_SPEED) {
+            setStatus(`Choose a speed between ${MIN_SPEED}x and ${MAX_SPEED}x`);
+            return;
+        }
+        setStatus("");
+
+        const { response, error } = await sendToVideo({ action: "setSpeed", speed });
+        if (error) {
+            setStatus("Open a YouTube video tab to change the speed");
+            return;
+        }
+        if (response && Number.isFinite(Number(response.speed))) {
+            speedInput.value = String(response.speed);
+            updateCurrentSpeed(response.speed);
+        }
+    }
+
+    // Show the live speed, or the remembered one when no video is in reach.
+    const { response, error } = await sendToVideo({ action: "getSpeed" });
+    if (error) {
+        let stored = null;
+        try {
+            const { speed } = await browser.storage.local.get("speed");
+            stored = Number.isFinite(Number(speed)) && speed !== null ? Number(speed) : null;
+        } catch (storageError) {
+            stored = null;
+        }
+        updateCurrentSpeed(stored);
+        setStatus("No YouTube tab in focus — open a video to apply a speed");
+    } else if (response && Number.isFinite(Number(response.speed))) {
+        updateCurrentSpeed(response.speed);
+    } else {
+        updateCurrentSpeed(null);
+    }
+
+    resetSpeedButton.addEventListener("click", () => applySpeed(1));
+
+    setSpeedButton.addEventListener("click", () => applySpeed(speedInput.value));
+
+    speedInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") applySpeed(speedInput.value);
     });
 
-    //applying custom speed from user input
-    setSpeedButton.addEventListener("click", applySpeed);
+    speedInput.addEventListener("input", () => {
+        if (parseSpeed(speedInput.value) !== null) setStatus("");
+    });
 
-    //buttons with events for applying pre-defined custom speeds
-    speedButtons.forEach(button => {
+    // Pre-defined custom speeds.
+    speedButtons.forEach((button) => {
         button.addEventListener("click", () => {
-            updateSpeed(parseFloat(button.dataset.speed));
+            speedInput.value = button.dataset.speed;
+            applySpeed(button.dataset.speed);
         });
     });
 
-    //listening to content script for update data
+    // Live updates from the content script and the keyboard shortcuts.
     browser.runtime.onMessage.addListener((request) => {
-        if (request.action === "updateSpeed") {
-            updateCurrentSpeed(request.speed);
-        }
+        if (request.action === "updateSpeed") updateCurrentSpeed(request.speed);
     });
 });
