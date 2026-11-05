@@ -4,7 +4,8 @@ YouTube caps its own speed menu at 2x and keeps 3x behind Premium. This
 extension replaces that row in the player's settings menu with an equivalent
 one that goes up to 3x, and it remembers the speed you pick.
 
-![Playback speed panel](docs/panel.jpg)
+<img width="932" height="716" alt="playback speed screenshot" src="https://github.com/user-attachments/assets/77f3d1fe-390b-4c0f-a747-a62d01a8a662" />
+
 
 ## Features
 
