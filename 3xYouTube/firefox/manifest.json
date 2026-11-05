@@ -5,10 +5,8 @@
   "description": "Increase YouTube playback speed beyond 2x",
   "permissions": [
     "activeTab",
-    "storage"
-  ],
-  "host_permissions": [
-      "*://www.youtube.com/*"
+    "storage",
+    "*://www.youtube.com/*"
   ],
   "background": {
     "scripts": ["background.js"],

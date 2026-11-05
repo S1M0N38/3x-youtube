@@ -14,9 +14,16 @@ playback speeds of up to 11x the default value. <br/>
 
 ## Browser Compatibility 
 
-This repository contains two versions, one which
-utilizes JSON Manifest V3 designed to work with Chrome 
-based browsers, and another version compatible with FireFox
-that utilizes Manifest V2.
+This repository contains a single build, in `3xYouTube/firefox`,
+which utilizes Manifest V2 and is designed to work with Firefox
+(and Firefox based browsers).
 
 Available for FireFox here: [https://addons.mozilla.org/en-US/firefox/addon/3xyoutube/](https://addons.mozilla.org/en-US/firefox/addon/3xyoutube/)
+
+## Loading it locally
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Choose *Load Temporary Add-on…* and select `3xYouTube/firefox/manifest.json`.
+
+Or run it with [web-ext](https://github.com/mozilla/web-ext):
+`npx web-ext run --source-dir 3xYouTube/firefox`
