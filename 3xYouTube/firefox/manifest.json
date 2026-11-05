@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "3xYouTube",
-  "version": "1.7",
+  "version": "1.8",
   "description": "Increase YouTube playback speed up to 3x straight from the player settings menu.",
   "permissions": [
     "storage",

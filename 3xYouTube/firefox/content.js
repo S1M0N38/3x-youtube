@@ -302,6 +302,15 @@ function isSpeedRow(row) {
     return SPEED_ROW_LABEL.test(label);
 }
 
+// Our row is cloned before YouTube has necessarily filled in its icon, and the
+// clone is reused afterwards, so the icon is copied over whenever it is missing.
+function ensureRowIcon(row, nativeRow) {
+    const cell = row.querySelector(".ytp-menuitem-icon");
+    const icon = nativeRow?.querySelector(".ytp-menuitem-icon svg");
+    if (!cell || !icon || cell.querySelector("svg")) return;
+    cell.append(icon.cloneNode(true));
+}
+
 // Cloning YouTube's own row keeps its icon, chevron, cell widths and hover
 // behaviour identical; only the label and value are replaced.
 function buildSettingsItem(nativeRow) {
@@ -325,6 +334,7 @@ function buildSettingsItem(nativeRow) {
     if (label) label.textContent = panelTitle;
     const content = row.querySelector(".ytp-menuitem-content");
     if (content) content.textContent = "Normal";
+    ensureRowIcon(row, nativeRow);
     return row;
 }
 
@@ -376,6 +386,7 @@ function syncSettingsItem() {
     const existing = root.querySelector("#yt3x-menuitem");
     if (existing) {
         settingsItem = existing;
+        ensureRowIcon(settingsItem, nativeRow);
     } else {
         settingsItem = buildSettingsItem(nativeRow);
         attachSettingsItemHandlers(settingsItem);
