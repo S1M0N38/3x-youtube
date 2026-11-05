@@ -90,7 +90,6 @@ browser.runtime.onMessage.addListener(async (request) => {
 // ---------------------------------------------------------------------------
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const ICON_BACK = "M15.41 7.41 14 6l-6 6 6 6 6-6-1.41-1.41L15.41 12z";
 const ICON_MINUS = "M19 13H5v-2h14v2z";
 const ICON_PLUS = "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z";
 
@@ -106,6 +105,9 @@ function createElement(tag, props = {}, children = []) {
     for (const child of children) el.append(child);
     return el;
 }
+
+// YouTube's own back-button background, copied so the chevron matches exactly.
+const BACK_ARROW_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5LjQxIDIwLjA5LTQuNTgtNC41OSA0LjU4LTQuNTlMMTggOS41bC02IDYgNiA2eiIvPjwvc3ZnPg==";
 
 function createIcon(pathData, size = 24) {
     const svg = document.createElementNS(SVG_NS, "svg");
@@ -187,7 +189,8 @@ function buildPanel() {
 
     const back = createElement("button", {
         class: "yt3x-back", type: "button", attrs: { "aria-label": "Back" },
-    }, [createIcon(ICON_BACK, 26)]);
+    });
+    back.style.backgroundImage = `url("${BACK_ARROW_SVG}")`;
     back.addEventListener("click", () => closePanel());
 
     const title = createElement("span", { class: "yt3x-title", text: panelTitle });
@@ -311,16 +314,30 @@ function isSpeedRow(row) {
     return SPEED_ROW_LABEL.test(label);
 }
 
-function buildSettingsItem() {
-    return createElement("div", {
-        class: "ytp-menuitem",
-        id: "yt3x-menuitem",
-        attrs: { role: "menuitem", tabindex: "0" },
-    }, [
-        createElement("div", { class: "ytp-menuitem-icon" }),
-        createElement("div", { class: "ytp-menuitem-label", text: panelTitle }),
-        createElement("div", { class: "ytp-menuitem-content", text: "Normal" }),
-    ]);
+// Cloning YouTube's own row keeps its icon, chevron, cell widths and hover
+// behaviour identical; only the label and value are replaced.
+function buildSettingsItem(nativeRow) {
+    const row = nativeRow
+        ? nativeRow.cloneNode(true)
+        : createElement("div", { class: "ytp-menuitem", attrs: { role: "menuitem", tabindex: "0" } }, [
+            createElement("div", { class: "ytp-menuitem-icon" }),
+            createElement("div", { class: "ytp-menuitem-label" }),
+            createElement("div", { class: "ytp-menuitem-content" }),
+        ]);
+
+    row.id = "yt3x-menuitem";
+    // the source row is hidden before it is cloned, so undo that on the copy
+    row.classList.remove("yt3x-hidden");
+    row.removeAttribute("aria-hidden");
+    row.setAttribute("role", "menuitem");
+    row.setAttribute("aria-haspopup", "true");
+    row.setAttribute("tabindex", "0");
+
+    const label = row.querySelector(".ytp-menuitem-label");
+    if (label) label.textContent = panelTitle;
+    const content = row.querySelector(".ytp-menuitem-content");
+    if (content) content.textContent = "Normal";
+    return row;
 }
 
 function attachSettingsItemHandlers(item) {
@@ -343,7 +360,18 @@ function syncSettingsItem() {
     const menu = nativeSettingsMenu();
     if (!menu) return;
 
+    watchSettingsMenu(menu);
     ensurePanel();
+
+    // YouTube reuses the very same panel when a sub-menu (Quality, Subtitles,
+    // ...) opens, so we must stay out of it: drop our row and bail out.
+    const submenuOpen = [...menu.querySelectorAll(".ytp-panel-header")]
+        .some((header) => header.offsetHeight > 0);
+    if (submenuOpen) {
+        for (const stale of menu.querySelectorAll("#yt3x-menuitem")) stale.remove();
+        settingsItem = null;
+        return;
+    }
 
     const root = menu.querySelector(".ytp-panel-menu");
     if (!root) return;
@@ -361,7 +389,7 @@ function syncSettingsItem() {
     if (existing) {
         settingsItem = existing;
     } else {
-        settingsItem = buildSettingsItem();
+        settingsItem = buildSettingsItem(nativeRow);
         attachSettingsItemHandlers(settingsItem);
         if (nativeRow) nativeRow.parentNode.insertBefore(settingsItem, nativeRow);
         else root.append(settingsItem);
@@ -402,6 +430,18 @@ const menuObserver = new MutationObserver((records) => {
 });
 menuObserver.observe(document.documentElement, { childList: true, subtree: true });
 
+// Opening/closing a sub-menu only flips classes and inline styles on the panel,
+// which produces no childList mutations, so the menu element is watched too.
+const menuStateObserver = new MutationObserver(() => scheduleSync());
+let menuStateTarget = null;
+
+function watchSettingsMenu(menu) {
+    if (menu === menuStateTarget) return;
+    menuStateObserver.disconnect();
+    menuStateObserver.observe(menu, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style", "aria-hidden"] });
+    menuStateTarget = menu;
+}
+
 // The player hides its controls after a moment of inactivity; do not leave the
 // panel floating over a hidden control bar.
 const autohideObserver = new MutationObserver(() => {
@@ -428,6 +468,13 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && panel && !panel.hidden) {
         event.stopPropagation();
         closePanel();
+        return;
+    }
+    // The shortcuts are handled by the browser (see background.js); cancelling
+    // the default here stops the page from scrolling at the same time.
+    if (event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey
+        && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+        event.preventDefault();
     }
 }, true);
 

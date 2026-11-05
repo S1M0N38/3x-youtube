@@ -5,26 +5,24 @@
     display: none !important;
 }
 
-/* Shared surface for the panel and the transient readout: dark, rounded,
-   blurred, matching the player's own overlays. */
 #yt3x-panel,
 #yt3x-osd {
-    border-radius: 12px;
-    background: rgba(28, 28, 28, 0.92);
-    backdrop-filter: blur(12px);
     color: #fff;
     font-family: Roboto, Arial, sans-serif;
     line-height: 1.2;
 }
 
+/* YouTube's settings menu is rgba(0,0,0,0.6) with no blur or shadow; the panel
+   matches it so it reads as part of the same menu. */
 #yt3x-panel {
     position: absolute;
     right: 12px;
     bottom: 56px;
     z-index: 72;
     width: 384px;
-    padding: 8px 0 14px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    padding: 0 0 14px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.6);
     font-size: 15px;
     text-align: left;
     direction: ltr;
@@ -43,32 +41,38 @@
 .yt3x-header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 4px 16px 8px;
+    gap: 12px;
+    box-sizing: border-box;
+    height: 57px;
+    padding: 0 12px 0 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .yt3x-back {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    margin-left: -8px;
+    flex: 0 0 auto;
+    width: 48px;
+    height: 48px;
     padding: 0;
     border: 0;
     border-radius: 50%;
-    background: none;
+    background: transparent no-repeat center / 32px 32px;
     color: inherit;
     cursor: pointer;
 }
 
 .yt3x-back:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.yt3x-back:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
 }
 
 .yt3x-title {
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 500;
+    line-height: 1.2;
 }
 
 .yt3x-value {
@@ -201,12 +205,14 @@
     top: 12%;
     left: 50%;
     z-index: 71;
+    border-radius: 12px;
+    background: rgba(28, 28, 28, 0.9);
+    backdrop-filter: blur(12px);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
     padding: 12px 26px 14px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
     transform: translateX(-50%);
     pointer-events: none;
     opacity: 0;
