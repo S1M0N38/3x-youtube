@@ -17,8 +17,9 @@ one that goes up to 3x, and it remembers the speed you pick.
   from 0.25x to 3x and the presets from 1.0 to 2.5.
 - **Remembers your speed** and re-applies it to every video, including after
   navigating and when the player is rebuilt.
-- **Keyboard shortcuts**: <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd>
-  step by 0.25x and show the new speed over the video.
+- **Keyboard shortcuts**: <kbd>↑</kbd> / <kbd>↓</kbd> step by 0.25x and show the
+  new speed over the video (this replaces YouTube's own volume shortcut;
+  <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd> work as well).
 
 ## Install
 

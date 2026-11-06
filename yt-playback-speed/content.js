@@ -470,9 +470,9 @@ function isEditable(element) {
     return element.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(element.tagName);
 }
 
-// Alt+Up / Alt+Down step the speed. This lives in the page (rather than in a
-// browser command) because cancelling the key's default action is what stops
-// the page from scrolling, and cancelling it would swallow the command too.
+// Up / Down step the speed (Alt+Up / Alt+Down still work too). This lives in
+// the page rather than in a browser command because we take the keys over from
+// YouTube's own Up/Down volume shortcut, which we cancel.
 function stepSpeed(direction) {
     const video = findVideoElement();
     const current = video ? video.playbackRate : DEFAULT_SPEED;
@@ -487,7 +487,7 @@ document.addEventListener("keydown", (event) => {
     }
 
     const direction = SHORTCUT_KEYS[event.key];
-    if (!direction || !event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (!direction || event.ctrlKey || event.metaKey || event.shiftKey) return;
     if (isEditable(event.target)) return;
 
     event.preventDefault();
